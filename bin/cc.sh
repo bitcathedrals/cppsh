@@ -1,0 +1,15 @@
+#! /usr/bin/env bash
+
+
+case $1 in
+  "macos-tools")
+    brew install bear cmake ninja
+    ;;
+  *)
+cat <<HELP
+cc.sh
+
+macos-tools   - install macos cpp tools using brew
+HELP
+    ;;
+esac
