@@ -3,7 +3,7 @@
 
 case $1 in
   "macos-tools")
-    brew install bear cmake ninja
+    brew install bear build2
     ;;
   *)
 cat <<HELP
