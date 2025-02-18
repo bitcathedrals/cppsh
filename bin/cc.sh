@@ -5,6 +5,9 @@ case $1 in
   "macos-tools")
     brew install bear build2
     ;;
+  "macos-reverse")
+    brew install binutils
+    ;;
   *)
 cat <<HELP
 cc.sh
