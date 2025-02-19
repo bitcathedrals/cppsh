@@ -12,7 +12,8 @@ case $1 in
 cat <<HELP
 cc.sh
 
-macos-tools   - install macos cpp tools using brew
+macos-tools   = install macos cpp tools using brew
+macos-reverse = install reverse engineering tools
 HELP
     ;;
 esac
