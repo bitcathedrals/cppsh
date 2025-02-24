@@ -60,13 +60,18 @@ case $1 in
   "kali")
       eval "doas apt install $compile_debian $capstone_debian imhex"
     ;;
+  "capstone-python")
+      pipenv install capstone
+      exit $?
+    ;;
   *)
 cat <<HELP
 cc.sh
 
-macos-tools   = macos tools install
-ubuntu        = ubuntu tools install
-kali          = kali tools install
+macos-tools      = macos tools install
+ubuntu           = ubuntu tools install
+kali             = kali tools install
+capstone-python  = install python bindings for capstone
 HELP
     ;;
 esac
