@@ -1,7 +1,10 @@
 #! /usr/bin/env bash
 
-debian_based="clang libclang-dev lldb gdb binutils autoconf bear"
+compile_based="clang libclang-dev lldb gdb binutils autoconf bear"
 
+CAPSTONE_VERSION="4"
+
+capstone_debian="libcapstone-dev capstone-tool libcapstone${CAPSTONE_VERSION} python3-capstone"
 
 BUILD2_BUILD_DIR=build2
 BUILD2_BUILD_PATH=$HOME/tools/build/$BUILD2_BUILD_DIR
@@ -51,11 +54,11 @@ case $1 in
     brew install bear build2 binutils retdec
     ;;
   "ubuntu")
-      eval "doas apt install $debian_based" && \
+      eval "doas apt install $compile_debian $capstone_debian" && \
       compile_build2
     ;;
   "kali")
-      eval "doas apt install $debian_based imhex"
+      eval "doas apt install $compile_debian $capstone_debian imhex"
     ;;
   *)
 cat <<HELP
