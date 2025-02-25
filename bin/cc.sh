@@ -51,7 +51,7 @@ function compile_build2 {
 
 case $1 in
   "macos-tools")
-    brew install bear build2 binutils retdec
+    brew install bear build2 binutils retdec capstone
     ;;
   "ubuntu")
       eval "doas apt install $compile_debian $capstone_debian" && \
