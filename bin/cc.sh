@@ -1,6 +1,9 @@
 #! /usr/bin/env bash
 
-compile_based="clang libclang-dev lldb gdb binutils autoconf bear"
+compile_based="clang libclang-dev lldb \
+gdb binutils autoconf \
+bear \
+musl musl-dev musl-tools"
 
 CAPSTONE_VERSION="4"
 
@@ -10,6 +13,7 @@ BUILD2_BUILD_DIR=build2
 BUILD2_BUILD_PATH=$HOME/tools/build/$BUILD2_BUILD_DIR
 BUILD2_VERSION=0.17.0
 
+BUILD_DIR=$HOME/tools/build
 INSTALL_DIR=$HOME/tools/local
 INSTALL_BIN=$INSTALL_DIR/bin
 
@@ -49,13 +53,22 @@ function compile_build2 {
   return $?
 }
 
+function install_musl_clang {
+  test -d $BUILD_DIR/musl-clang && return 0
+
+  git clone https://github.com/esjeon/musl-clang.git $BUILD_DIR/musl-clang
+  cp $BUILD_DIR/musl-clang/musl-clang $INSTALL_BIN/
+  chmod u+x $INSTALL_BIN/musl-clang
+}
+
 case $1 in
   "macos-tools")
     brew install bear build2 binutils retdec capstone
     ;;
   "ubuntu")
       eval "doas apt install $compile_debian $capstone_debian" && \
-      compile_build2
+      compile_build2 && \
+      install_musl_clang
     ;;
   "kali")
       eval "doas apt install $compile_debian $capstone_debian imhex"
