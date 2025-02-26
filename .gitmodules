@@ -4,3 +4,20 @@
 	ignore = dirty
 	branch = main
 
+[submodule "resources/examples-inspired-by-stroustrup"]
+	path = resources/examples-inspired-by-stroustrup
+	url = https://github.com/johnnyodonnell/TheCppProgrammingLanguage.git
+	ignore = dirty
+	branch = master
+
+[submodule "resources/cpp-projects"]
+	path = resources/cpp-projects
+	url = https://github.com/nragland37/cpp-projects.git
+	ignore = dirty
+	branch = main
+
+[submodule "resources/c-example-code"]
+	path = resources/c-example-code
+	url = https://github.com/portfoliocourses/c-example-code.git
+	branch = main
+	ignore = dirty
