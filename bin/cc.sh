@@ -71,7 +71,9 @@ case $1 in
       install_musl_clang
     ;;
   "kali")
-      eval "doas apt install $compile_debian $capstone_debian imhex"
+      eval "doas apt install $compile_debian $capstone_debian imhex" && \
+      compile_build2 && \
+      install_musl_clang
     ;;
   "capstone-python")
       pipenv install capstone
