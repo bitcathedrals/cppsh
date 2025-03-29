@@ -173,24 +173,67 @@ function toolchain_list {
   return 0;
 }
 
+function tooling_options {
+  options="-v --progress --diag-color"
+
+  uname=$(uname)
+
+  case $uname in
+    "Darwin")
+       cores=$(sysctl -n hw.ncpu)
+
+       if [[ -n $cores ]]
+       then
+         options="$spec --jobs $cores"
+       fi
+     ;;
+  esac
+}
+
 function tooling_create {
   name=$1
   shift
 
+  tooling_options
+
   if [[ $NOP == "true" ]]
   then
-    echo "cc.sh [NOP] (call): (cd ${PROJECT_BUILD2} && bdep config create -v --diag-color --progress -- @${name} ${PROJECT_TOOLING}/${name} $*)"
+    echo "cc.sh [NOP] (call): (cd ${PROJECT_BUILD2} && bdep config create $options -- @${name} ${PROJECT_TOOLING}/${name} $*)"
+    return 0
   fi  
 
-  eval "(cd ${PROJECT_ROOT} && bdep config create -v --diag-color --progress -- @${name} ${PROJECT_TOOLING}/${name} $*)"
+  eval "(cd ${PROJECT_ROOT} && bdep config create $options -- @${name} ${PROJECT_TOOLING}/${name} $*)"
   return $?
 }
+
+function tooling_delete {
+  name=$1
+
+  if [[ ! -d ${PROJECT_TOOLING}$name ]]
+  then
+    return 0
+  fi
+
+  echo >/dev/stderr "cc.sh (exec): deleting old tooling $name"
+
+  if [[ $NOP == "true" ]]
+  then
+    echo "cc.sh [NOP] (exec): (cd ${PROJECT_TOOLING} && rm -r ${name})"
+    return 0
+  fi
+
+  (cd ${PROJECT_TOOLING} && rm -r ${name})      
+  return $?
+}
+
 
 function c_configuration {
   compiler=$1
   shift
 
-  spec="@${compiler} cc "
+  spec="@${compiler} cc"
+  spec="$spec config.c.loptions=\"-v\""
+  spec="$spec config.cxx.loptions=\"-v\""
 
   if [[ -n $SWITCHES ]]
   then
@@ -207,6 +250,12 @@ function c_configuration {
   then
     spec="$spec config.cxx.coptions=\"$CPP_SWITCHES\" "
   fi
+
+#  case $compiler in
+#    "clang")
+#      spec="$spec config.ld=lld"
+#    ;;
+#  esac
 
 #  spec="$spec config.c.poptions=\"-I${REPO}/include -I${PROJECT_DEPS}/include/\" "
 #  spec="$spec config.c.loptions=\"-L${REPO}/$compiler/ -L${PROJECT_DEPS}/$compiler/\" "
@@ -281,16 +330,16 @@ function c_tooling_spec {
 }
 
 function c_new {
-  name=$1
-  compiler=$2
-  type=$3
+  new_name=$1
+  new_compiler=$2
+  new_type=$3
 
   if [[ $NOP == "true" ]]
   then
-    echo "cc.ssh [NOP] (args): name=$name compiler=$compiler type=$type"
+    echo "cc.ssh [NOP] (args): name=$new_name compiler=$new_compiler type=$new_type"
   fi
 
-  create_project_paths $name
+  create_project_paths $new_name
 
   if [[ $? -ne 0 ]]
   then
@@ -298,37 +347,66 @@ function c_new {
     exit 1
   fi
 
-  if [[ $type == "exe" ]]
+  case $new_type in
+    "exe")
+      type_spec="-t exe"
+    ;;
+    "exe-test")
+      type_spec="-t exe,unit-tests"
+    ;;
+    "lib")
+      type_spec="-t lib,split"
+    ;;
+    "lib-test")
+      type_spec="-t lib,split,unit-tests"
+    ;;
+    *)
+      echo >/dev/stderr "cc.sh [error]: new_type=$new_type unsupported. aborting."
+      exit 1
+    ;;
+  esac
+
+  if [[ $NOP == "true" ]]
   then
-    type_spec="-t exe,unit-tests"
+    echo "cc.sh [NOP] (call): tooling_delete($new_compiler)"
   else
-    type_spec="-t lib,split,unit-tests"
+# delete old tooling if present
+    tooling_delete $new_compiler
   fi
 
   if [[ $NOP == "true" ]]
   then
-    echo "cc.sh [NOP] (call): c_tooling_spec($compiler)"
+    echo "cc.sh [NOP] (call): tooling_options($new_compiler)"
+  else
+    tooling_options
+    echo "cc.sh (value): tooling_options = $options"
   fi
-
-  c_tooling_spec $compiler
-
-  echo >/dev/stderr "cc.sh (exec): exec bdep new -l c,c++ ${type_spec} $name ${c_tooling}"
 
   if [[ $NOP == "true" ]]
   then
-    echo "cc.sh [NOP] (exec): bdep new -v -l c,c++ ${type_spec} $name ${c_tooling}"
+    echo "cc.sh [NOP] (call): c_tooling_spec($new_compiler)"
   else
-    eval "bdep new -v -s none -l c,c++ ${type_spec} $name ${c_tooling}"
+    c_tooling_spec $new_compiler
+    echo "cc.sh (value): c_tooling_spec = $c_tooling"
   fi
 
-  echo >>.gitignore <<IGNORE
-${name}/.build2
+
+  if [[ $NOP == "true" ]]
+  then
+    echo "cc.sh [NOP] (exec): bdep new <options> -l c,c++ <type_spec> $new_name <c_tooling>"
+  else
+    echo >/dev/stderr "cc.sh (exec): exec bdep new $options -l c,c++ ${type_spec} $new_name ${c_tooling}"
+    eval "bdep new $options -s none -l c,c++ ${type_spec} $new_name ${c_tooling}"
+  fi
+
+  cat >>.gitignore <<IGNORE
+${new_name}/.build2
 tooling/
 bin/
 *.so
 IGNORE
 
-  echo "$name" >build2.name
+  echo "$new_name" >build2.name
 
   return 0;
 }
@@ -387,10 +465,18 @@ case $1 in
 
       name=$1
       compiler=$2
+      test=$3
+
+      if [[ $test == "-tests" ]]
+      then
+        project_type="exe-test"
+      else
+        project_type="exe"
+      fi
 
       echo >/dev/stderr "cc.sh -> c-exe: creating exe project $name with compiler $compiler"
 
-      c_new $name $compiler "exe"
+      c_new $name $compiler $project_type
       exit $?
     ;;
     "c-lib")
@@ -398,10 +484,18 @@ case $1 in
 
       name=$1
       compiler=$2
+      test=$3
 
       echo >/dev/stderr "cc.sh -> c-lib: creating lib project $name with compiler $compiler"
 
-      c_new $name $compiler "lib"
+      if [[ $test == "-tests" ]]
+      then
+        project_type="lib-test"
+      else
+        project_type="lib"
+      fi
+
+      c_new $name $compiler $project_type
       exit $?
     ;;
     "test")
@@ -415,13 +509,6 @@ case $1 in
       fi
 
       (cd ${PROJECT_BUILD2} && b test $@)
-      exit $?
-    ;;
-    "status")
-      shift
-      project_root
-
-      (cd ${PROJECT_BUILD2} && b status)
       exit $?
     ;;
     "info")
@@ -444,11 +531,11 @@ capstone-python  = install python bindings for capstone
 
 [create]
 
-c-exe <NAME> <COMPILER> = create a C program with <NAME> and <COMPILER>
-c-lib <NAME> <COMPILER> = create a C library with <NAME> and <COMPILER>
+c-exe <NAME> <COMPILER> <-tests?> = create a C program with <NAME> and <COMPILER>
+c-lib <NAME> <COMPILER> <-tests?> = create a C library with <NAME> and <COMPILER>
+
 build   = build the project
 test    = run test suite
-status  = report status of project
 info    = print configuration info
 HELP
     ;;
