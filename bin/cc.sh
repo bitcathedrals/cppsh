@@ -333,6 +333,7 @@ function c_new {
   new_name=$1
   new_compiler=$2
   new_type=$3
+  lang_type=$4
 
   if [[ $NOP == "true" ]]
   then
@@ -390,21 +391,39 @@ function c_new {
     echo "cc.sh (value): c_tooling_spec = $c_tooling"
   fi
 
+  case $lang_type in
+    "C")
+      lang_spec="-l c,c++"
+      ;;
+    "C++")
+      lang_spec="-l c++,c"
+      ;;
+    *)
+      echo "cc.sh [error]: lang_type=$lang_type unrecognized. exiting."
+      exit 1
+      ;;
+  esac
 
   if [[ $NOP == "true" ]]
   then
-    echo "cc.sh [NOP] (exec): bdep new <options> -l c,c++ <type_spec> $new_name <c_tooling>"
+    echo "cc.sh [NOP] (exec): bdep new <options> $lang_spec <type_spec> $new_name <c_tooling>"
   else
-    echo >/dev/stderr "cc.sh (exec): exec bdep new $options -l c,c++ ${type_spec} $new_name ${c_tooling}"
-    eval "bdep new $options -s none -l c,c++ ${type_spec} $new_name ${c_tooling}"
+    echo >/dev/stderr "cc.sh (exec): exec bdep new $options $lang_spec ${type_spec} $new_name ${c_tooling}"
+    eval "bdep new $options -s none $lang_spec ${type_spec} $new_name ${c_tooling}"
   fi
 
-  cat >>.gitignore <<IGNORE
+  grep >/dev/null -E "^# ---CPPSH---" .gitignore 
+
+  if [[ $? -ne 0 ]]
+  then
+    cat >>.gitignore <<IGNORE
+# ---CPPSH---
 ${new_name}/.build2
 tooling/
 bin/
 *.so
 IGNORE
+  fi
 
   echo "$new_name" >build2.name
 
@@ -476,7 +495,7 @@ case $1 in
 
       echo >/dev/stderr "cc.sh -> c-exe: creating exe project $name with compiler $compiler"
 
-      c_new $name $compiler $project_type
+      c_new $name $compiler $project_type "C"
       exit $?
     ;;
     "c-lib")
@@ -495,7 +514,7 @@ case $1 in
         project_type="lib"
       fi
 
-      c_new $name $compiler $project_type
+      c_new $name $compiler $project_type "C"
       exit $?
     ;;
     "test")
