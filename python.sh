@@ -1,7 +1,7 @@
 # pythonsh configuration file
 VERSION=0.1.0
 
-SOURCE=src
+SOURCE=.
 
 BUILD_NAME=cppsh
 
