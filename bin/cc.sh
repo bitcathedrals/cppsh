@@ -231,6 +231,19 @@ function c_configuration {
   compiler=$1
   shift
 
+  static=""
+
+  while [[ -n $1 ]]
+  do
+    case $1 in
+      "static")
+        static="-static"
+      ;;
+    esac
+
+    shift
+  done
+
   spec="@${compiler} cc"
   spec="$spec config.c.loptions=\"-v\""
   spec="$spec config.cxx.loptions=\"-v\""
@@ -251,17 +264,45 @@ function c_configuration {
     spec="$spec config.cxx.coptions=\"$CPP_SWITCHES\" "
   fi
 
-#  case $compiler in
-#    "clang")
-#      spec="$spec config.ld=lld"
-#    ;;
-#  esac
+  repo_lib="${REPO}/$compiler"
+  deps_lib="${PROJECT_DEPS}/$compiler"
 
-#  spec="$spec config.c.poptions=\"-I${REPO}/include -I${PROJECT_DEPS}/include/\" "
-#  spec="$spec config.c.loptions=\"-L${REPO}/$compiler/ -L${PROJECT_DEPS}/$compiler/\" "
+  if [[ -d $repo_lib ]]
+  then
+    repo_lib="-L${repo_lib}"
+  else
+    repo_lib=""
+  fi
 
-#  spec="$spec config.cxx.poptions=\"-I${REPO}/include -I${PROJECT_DEPS}/include/\" "
-#  spec="$spec config.cxx.loptions=\"-L${REPO}/$compiler -L${PROJECT_DEPS}/$compiler/\" "
+  if [[ -d $deps_lib ]]
+  then
+    deps_lib="-L${deps_lib}"
+  else
+    deps_lib=""
+  fi
+
+  spec="$spec config.cxx.loptions=\"$static $deps_lib $repo_lib\" "
+  spec="$spec config.c.loptions=\"$static $deps_lib $repo_lib\" "
+
+  repo_headers="${REPO}/include"
+  deps_headers="${PROJECT_DEPS}/include"
+
+  if [[ -d $repo_headers ]]
+  then
+    repo_headers="-I${repo_headers}"
+  else
+    repo_headers=""
+  fi
+
+  if [[ -d $deps_headers ]]
+  then
+    deps_headers="-I${deps_headers}"
+  else
+    deps_headers=""
+  fi
+
+  spec="$spec config.c.poptions=\"$deps_headers $repo_headers\" "
+  spec="$spec config.cxx.poptions=\"$deps_headers $repo_headers\" "
 
   spec="$spec $*"
 }
