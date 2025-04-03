@@ -558,6 +558,44 @@ case $1 in
       c_new $name $compiler $project_type "C"
       exit $?
     ;;
+    "cxx-exe")
+      shift
+
+      name=$1
+      compiler=$2
+      test=$3
+
+      if [[ $test == "-tests" ]]
+      then
+        project_type="exe-test"
+      else
+        project_type="exe"
+      fi
+
+      echo >/dev/stderr "cc.sh -> cxx-exe: creating exe project $name with compiler $compiler"
+
+      c_new $name $compiler $project_type "C++"
+      exit $?
+    ;;
+    "c-lib")
+      shift
+
+      name=$1
+      compiler=$2
+      test=$3
+
+      echo >/dev/stderr "cc.sh -> cxx-lib: creating lib project $name with compiler $compiler"
+
+      if [[ $test == "-tests" ]]
+      then
+        project_type="lib-test"
+      else
+        project_type="lib"
+      fi
+
+      c_new $name $compiler $project_type "C++"
+      exit $?
+    ;;
     "test")
       shift
       project_root
@@ -593,6 +631,9 @@ capstone-python  = install python bindings for capstone
 
 c-exe <NAME> <COMPILER> <-tests?> = create a C program with <NAME> and <COMPILER>
 c-lib <NAME> <COMPILER> <-tests?> = create a C library with <NAME> and <COMPILER>
+
+cxx-exe <NAME> <COMPILER> <-tests?> = create a C++ program with <NAME> and <COMPILER>
+cxx-lib <NAME> <COMPILER> <-tests?> = create a C++ library with <NAME> and <COMPILER>
 
 build   = build the project
 test    = run test suite
