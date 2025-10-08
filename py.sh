@@ -1,1 +1,0 @@
-pythonsh/pythonsh/python.sh

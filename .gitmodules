@@ -1,9 +1,3 @@
-[submodule "pythonsh"]
-	path = pythonsh
-	url = https://github.com/bitcathedrals/pythonsh.git
-	ignore = dirty
-	branch = main
-
 [submodule "resources/examples-inspired-by-stroustrup"]
 	path = resources/examples-inspired-by-stroustrup
 	url = https://github.com/johnnyodonnell/TheCppProgrammingLanguage.git
